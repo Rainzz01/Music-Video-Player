@@ -1,0 +1,30 @@
+name: flutter_application_1
+description: "A new Flutter project."
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  audioplayers: ^6.4.0          # For audio playback
+  provider: ^6.1.4             # For state management
+  permission_handler: ^11.3.1  # For requesting storage permissions
+  file_picker: ^8.1.2          # For manual file import
+  path_provider: ^2.1.5        # For accessing local storage
+  metadata_god: ^1.0.0         # For extracting metadata from audio files
+  mime: ^2.0.0                # For determining mime types (used with metadata_god)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/audio/
+    - assets/images/
+    - assets/video/
