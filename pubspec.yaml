@@ -7,10 +7,15 @@ environment:
   sdk: ^3.7.2
 
 dependencies:
-  audioplayers: ^6.4.0
   flutter:
     sdk: flutter
-  provider: ^6.1.4
+  audioplayers: ^6.4.0          # For audio playback
+  provider: ^6.1.4             # For state management
+  permission_handler: ^11.3.1  # For requesting storage permissions
+  file_picker: ^8.1.2          # For manual file import
+  path_provider: ^2.1.5        # For accessing local storage
+  metadata_god: ^1.0.0         # For extracting metadata from audio files
+  mime: ^2.0.0                # For determining mime types (used with metadata_god)
 
 dev_dependencies:
   flutter_test:

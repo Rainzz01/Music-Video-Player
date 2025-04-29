@@ -1,194 +1,130 @@
+// lib/pages/song_page.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/components/neu_box.dart';
-import 'package:flutter_application_1/models/playlist_provider.dart';
 import 'package:provider/provider.dart';
+import '../components/neu_box.dart';
+import '../models/playlist_provider.dart';
+import '../models/song.dart';
 
 class SongPage extends StatelessWidget {
   const SongPage({super.key});
 
-  //covert sec into min:sec
   String formatTime(Duration duration) {
-    String twoDigitsSeconds = duration.inSeconds
-        .remainder(60)
-        .toString()
-        .padLeft(2, '0');
-    String formattedTime = "${duration.inMinutes}:$twoDigitsSeconds";
-
-    return formattedTime;
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<PlaylistProvider>(
       builder: (context, value, child) {
-        //get playlist
-        final playlist = value.playlist;
+        final song = value.playlist[value.currentSongIndex ?? 0];
+        final recommendations = value.getRecommendations(song);
 
-        //get current song
-        final currentSong = playlist[value.currentSongIndex ?? 0];
-        // 添加非空和范围检查
-        if (value.currentSongIndex == null ||
-            value.currentSongIndex! < 0 ||
-            value.currentSongIndex! >= playlist.length) {
-          return Center(child: Text("No song selected"));
-        }
-        //return scaffold ui
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
+          appBar: AppBar(title: Text(song.songName)),
           body: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.only(left: 25, right: 25, bottom: 25),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  //app bar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      //back btn
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back),
+                  NeuBox(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        File(song.albumArtImagePath),
+                        height: 200,
+                        width: 200,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Image.asset('assets/images/default_art.png'),
                       ),
-                      //title
-                      const Text("PLAYLIST"),
-
-                      //menu btn
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.menu),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Column(
+                    children: [
+                      Text(
+                        song.songName,
+                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        song.artistName,
+                        style: const TextStyle(fontSize: 18),
                       ),
                     ],
                   ),
-
-                  SizedBox(height: 30),
-                  //album artwork
+                  const SizedBox(height: 20),
                   NeuBox(
                     child: Column(
                       children: [
-                        //img
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.asset(currentSong.albumArtImagePath),
+                        Slider(
+                          value: value.currentDuration.inSeconds.toDouble(),
+                          max: value.totalDuration.inSeconds.toDouble(),
+                          onChanged: (newValue) {
+                            value.seek(Duration(seconds: newValue.toInt()));
+                          },
                         ),
-
                         Padding(
-                          padding: EdgeInsets.all(15.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              //Song & artis name
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    currentSong.songName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20,
-                                    ),
-                                  ),
-                                  Text(currentSong.artisName),
-                                ],
-                              ),
-                              //heart icon
-                              const Icon(Icons.favorite, color: Colors.red),
+                              Text(formatTime(value.currentDuration)),
+                              Text(formatTime(value.totalDuration)),
                             ],
                           ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.skip_previous),
+                              onPressed: value.playPreviousSong,
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                  value.isPlaying ? Icons.pause : Icons.play_arrow),
+                              onPressed: value.pauseOrResume,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.skip_next),
+                              onPressed: value.playNextSong,
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 25),
-
-                  //song duration progress
-                  Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            //start time
-                            Text(formatTime(value.currentDuration)),
-
-                            //suffle icon
-                            Icon(Icons.shuffle),
-
-                            //repeat icon
-                            Icon(Icons.repeat),
-
-                            //end time
-                            Text(formatTime(value.totalDuration)),
-                          ],
-                        ),
-                      ),
-
-                      //song duration progress
-                      SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 0,
-                          ),
-                        ),
-                        child: Slider(
-                          min: 0,
-                          max: value.totalDuration.inSeconds.toDouble(),
-                          value: value.currentDuration.inSeconds.toDouble(),
-                          activeColor: Colors.green,
-                          onChanged: (double double) {
-                            //during when the user is sliding around
-                          },
-                          onChangeEnd: (double double) {
-                            //sliding has finished, go to that position in song duration
-                            value.seek(Duration(seconds: double.toInt()));
-                          },
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Recommended Songs',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
-
-                  const SizedBox(height: 25),
-
-                  //playback controls
-                  Row(
-                    children: [
-                      //skip previous
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: value.playPreviousSong,
-                          child: NeuBox(child: Icon(Icons.skip_previous)),
-                        ),
-                      ),
-
-                      //gap
-                      const SizedBox(width: 20),
-
-                      //play pause
-                      Expanded(
-                        flex: 2,
-                        child: GestureDetector(
-                          onTap: value.pauseOrResume,
-                          child: NeuBox(
-                            child: Icon(
-                              value.isPlaying ? Icons.pause : Icons.play_arrow,
-                            ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: recommendations.length,
+                      itemBuilder: (context, index) {
+                        final recSong = recommendations[index];
+                        return ListTile(
+                          title: Text(recSong.songName),
+                          subtitle: Text(recSong.artistName),
+                          leading: Image.file(
+                            File(recSong.albumArtImagePath),
+                            width: 50,
+                            height: 50,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Image.asset('assets/images/default_art.png'),
                           ),
-                        ),
-                      ),
-
-                      //gap
-                      const SizedBox(width: 20),
-
-                      //skip forward
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: value.playNextSong,
-                          child: NeuBox(child: Icon(Icons.skip_next)),
-                        ),
-                      ),
-                    ],
+                          onTap: () {
+                            value.currentSongIndex = value.playlist.indexOf(recSong);
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),

@@ -1,8 +1,9 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/playlist_provider.dart';
-import 'package:flutter_application_1/pages/home_page.dart';
-import 'package:flutter_application_1/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'models/playlist_provider.dart';
+import 'pages/home_page.dart';
+import 'theme/theme_provider.dart';
 
 void main() {
   runApp(
