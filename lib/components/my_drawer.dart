@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../models/playlist_provider.dart';
+import '../pages/playlist_page.dart';
 import '../pages/settings_page.dart';
 
 class MyDrawer extends StatelessWidget {
@@ -27,8 +28,8 @@ class MyDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scaffoldMessenger = ScaffoldMessenger.of(context); // Store ScaffoldMessengerState
-    final playlistProvider = Provider.of<PlaylistProvider>(context, listen: false); // Store provider
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final playlistProvider = Provider.of<PlaylistProvider>(context, listen: false);
     return Drawer(
       backgroundColor: Theme.of(context).colorScheme.surface,
       child: Column(
@@ -53,6 +54,20 @@ class MyDrawer extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 25.0, top: 0),
             child: ListTile(
+              title: const Text("P L A Y L I S T"),
+              leading: const Icon(Icons.playlist_play),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PlaylistPage()),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 25.0, top: 0),
+            child: ListTile(
               title: const Text("S E T T I N G S"),
               leading: const Icon(Icons.settings),
               onTap: () {
@@ -70,7 +85,7 @@ class MyDrawer extends StatelessWidget {
               title: const Text("I M P O R T"),
               leading: const Icon(Icons.folder),
               onTap: () async {
-                Navigator.pop(context); // Close drawer first
+                Navigator.pop(context);
                 try {
                   if (!await _requestPermissions()) {
                     scaffoldMessenger.showSnackBar(

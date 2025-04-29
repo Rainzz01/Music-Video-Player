@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
@@ -18,11 +19,12 @@ class PlaylistProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   bool _metadataInitialized = false;
+  List<String> _importedSongPaths = []; // Track imported song paths
 
   PlaylistProvider() {
     _initializeMetadataGod();
     listenToDuration();
-    loadLocalSongs();
+    _loadImportedSongs(); // Load persisted songs
   }
 
   // Initialize metadata_god
@@ -39,10 +41,37 @@ class PlaylistProvider extends ChangeNotifier {
     }
   }
 
+  // Load persisted imported song paths
+  Future<void> _loadImportedSongs() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/imported_songs.json');
+      if (await file.exists()) {
+        final jsonString = await file.readAsString();
+        _importedSongPaths = List<String>.from(jsonDecode(jsonString));
+        print('Loaded imported songs: $_importedSongPaths');
+      }
+      await loadLocalSongs(); // Load songs after initializing imported paths
+    } catch (e) {
+      print('Error loading imported songs: $e');
+    }
+  }
+
+  // Save imported song paths
+  Future<void> _saveImportedSongs() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/imported_songs.json');
+      await file.writeAsString(jsonEncode(_importedSongPaths));
+      print('Saved imported songs: $_importedSongPaths');
+    } catch (e) {
+      print('Error saving imported songs: $e');
+    }
+  }
+
   // Request permissions with Android 13+ priority
   Future<bool> _requestPermissions() async {
     try {
-      // Check current status
       var storageStatus = await Permission.storage.status;
       var audioStatus = await Permission.audio.status;
       var imagesStatus = await Permission.photos.status;
@@ -52,7 +81,6 @@ class PlaylistProvider extends ChangeNotifier {
       print('Initial images status: $imagesStatus');
       print('Initial videos status: $videosStatus');
 
-      // Request permissions if not granted
       if (!audioStatus.isGranted) {
         audioStatus = await Permission.audio.request();
         print('Requested audio status: $audioStatus');
@@ -65,19 +93,16 @@ class PlaylistProvider extends ChangeNotifier {
         videosStatus = await Permission.videos.request();
         print('Requested videos status: $videosStatus');
       }
-      // Request storage last, as it's less critical on Android 13+
       if (!storageStatus.isGranted) {
         storageStatus = await Permission.storage.request();
         print('Requested storage status: $storageStatus');
       }
 
-      // Check if any required permission is granted
       if (audioStatus.isGranted || imagesStatus.isGranted || videosStatus.isGranted) {
         print('At least one media permission granted');
         return true;
       }
 
-      // Handle permanent denials
       if (audioStatus.isPermanentlyDenied ||
           imagesStatus.isPermanentlyDenied ||
           videosStatus.isPermanentlyDenied ||
@@ -88,7 +113,6 @@ class PlaylistProvider extends ChangeNotifier {
         return false;
       }
 
-      // Retry once
       print('Retrying permissions');
       if (!audioStatus.isGranted) {
         audioStatus = await Permission.audio.request();
@@ -145,6 +169,7 @@ class PlaylistProvider extends ChangeNotifier {
       _playlist.clear();
       _categories.clear();
 
+      // Scan predefined directories
       for (var dirPath in musicDirs) {
         print('Scanning directory: $dirPath');
         final directory = Directory(dirPath);
@@ -153,47 +178,21 @@ class PlaylistProvider extends ChangeNotifier {
           print('Found ${files.length} files in $dirPath');
           for (var file in files) {
             if (file is File && (file.path.endsWith('.mp3') || file.path.endsWith('.m4a'))) {
-              try {
-                print('Processing file: ${file.path}');
-                Song song;
-                if (_metadataInitialized) {
-                  final metadata = await MetadataGod.readMetadata(file: file.path);
-                  song = Song(
-                    songName: metadata.title ??
-                        file.path.split('/').last.replaceAll('.mp3', '').replaceAll('.m4a', ''),
-                    artistName: metadata.artist ?? 'Unknown Artist',
-                    albumArtImagePath: metadata.picture != null
-                        ? await _saveAlbumArt(metadata.picture!, file.path)
-                        : 'assets/images/default_art.png',
-                    audioPath: file.path,
-                    album: metadata.album ?? 'Unknown Album',
-                    genre: metadata.genre ?? 'Unknown',
-                  );
-                } else {
-                  song = Song(
-                    songName: file.path.split('/').last.replaceAll('.mp3', '').replaceAll('.m4a', ''),
-                    artistName: 'Unknown Artist',
-                    albumArtImagePath: 'assets/images/default_art.png',
-                    audioPath: file.path,
-                    album: 'Unknown Album',
-                    genre: 'Unknown',
-                  );
-                }
-                _playlist.add(song);
-
-                final genre = song.genre ?? 'Unknown';
-                if (!_categories.containsKey(genre)) {
-                  _categories[genre] = [];
-                }
-                _categories[genre]!.add(song);
-                print('Added song: ${song.songName}');
-              } catch (e) {
-                print('Error processing file ${file.path}: $e');
-              }
+              await _addSong(file);
             }
           }
         } else {
           print('Directory $dirPath does not exist');
+        }
+      }
+
+      // Add imported songs
+      for (var path in _importedSongPaths) {
+        final file = File(path);
+        if (await file.exists()) {
+          await _addSong(file);
+        } else {
+          print('Imported file no longer exists: $path');
         }
       }
     } catch (e) {
@@ -204,6 +203,48 @@ class PlaylistProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
     print('Scan complete. Playlist size: ${_playlist.length}');
+  }
+
+  // Helper to add a song
+  Future<void> _addSong(File file) async {
+    try {
+      print('Processing file: ${file.path}');
+      Song song;
+      if (_metadataInitialized) {
+        final metadata = await MetadataGod.readMetadata(file: file.path);
+        song = Song(
+          songName: metadata.title ??
+              file.path.split('/').last.replaceAll('.mp3', '').replaceAll('.m4a', ''),
+          artistName: metadata.artist ?? 'Unknown Artist',
+          albumArtImagePath: metadata.picture != null
+              ? await _saveAlbumArt(metadata.picture!, file.path)
+              : 'assets/images/default_art.png',
+          audioPath: file.path,
+          album: metadata.album ?? 'Unknown Album',
+          genre: metadata.genre ?? 'Unknown',
+        );
+      } else {
+        song = Song(
+          songName: file.path.split('/').last.replaceAll('.mp3', '').replaceAll('.m4a', ''),
+          artistName: 'Unknown Artist',
+          albumArtImagePath: 'assets/images/default_art.png',
+          audioPath: file.path,
+          album: 'Unknown Album',
+          genre: 'Unknown',
+        );
+      }
+      if (!_playlist.any((s) => s.audioPath == song.audioPath)) {
+        _playlist.add(song);
+        final genre = song.genre ?? 'Unknown';
+        if (!_categories.containsKey(genre)) {
+          _categories[genre] = [];
+        }
+        _categories[genre]!.add(song);
+        print('Added song: ${song.songName}');
+      }
+    } catch (e) {
+      print('Error processing file ${file.path}: $e');
+    }
   }
 
   // Save album art to local storage
@@ -227,43 +268,46 @@ class PlaylistProvider extends ChangeNotifier {
       final file = File(path);
       if (!await file.exists()) {
         print('File does not exist: $path');
-        return;
+        throw Exception('Selected file does not exist: $path');
       }
-      Song song;
-      if (_metadataInitialized) {
-        final metadata = await MetadataGod.readMetadata(file: file.path);
-        song = Song(
-          songName: metadata.title ?? path.split('/').last.replaceAll('.mp3', '').replaceAll('.m4a', ''),
-          artistName: metadata.artist ?? 'Unknown Artist',
-          albumArtImagePath: metadata.picture != null
-              ? await _saveAlbumArt(metadata.picture!, path)
-              : 'assets/images/default_art.png',
-          audioPath: path,
-          album: metadata.album ?? 'Unknown Album',
-          genre: metadata.genre ?? 'Unknown',
-        );
-      } else {
-        song = Song(
-          songName: path.split('/').last.replaceAll('.mp3', '').replaceAll('.m4a', ''),
-          artistName: 'Unknown Artist',
-          albumArtImagePath: 'assets/images/default_art.png',
-          audioPath: path,
-          album: 'Unknown Album',
-          genre: 'Unknown',
-        );
+      await _addSong(file);
+      if (!_importedSongPaths.contains(path)) {
+        _importedSongPaths.add(path);
+        await _saveImportedSongs();
       }
-      _playlist.add(song);
-
-      final genre = song.genre ?? 'Unknown';
-      if (!_categories.containsKey(genre)) {
-        _categories[genre] = [];
-      }
-      _categories[genre]!.add(song);
-      print('Imported song: ${song.songName}, Playlist size: ${_playlist.length}');
+      print('Imported song: ${file.path.split('/').last}, Playlist size: ${_playlist.length}');
       notifyListeners();
     } catch (e) {
       print('Error importing file $path: $e');
-      throw Exception('Failed to import song: $e'); // Throw to be caught in MyDrawer
+      throw Exception('Failed to import song: $e');
+    }
+  }
+
+  // Update song metadata
+  void updateSong(Song oldSong, String newName, String newArtist, String newGenre) {
+    final index = _playlist.indexWhere((s) => s.audioPath == oldSong.audioPath);
+    if (index != -1) {
+      final oldGenre = _playlist[index].genre;
+      _playlist[index] = Song(
+        songName: newName,
+        artistName: newArtist,
+        albumArtImagePath: _playlist[index].albumArtImagePath,
+        audioPath: _playlist[index].audioPath,
+        album: _playlist[index].album,
+        genre: newGenre,
+      );
+      // Update categories
+      if (oldGenre != newGenre) {
+        _categories[oldGenre]?.removeWhere((s) => s.audioPath == oldSong.audioPath);
+        if (_categories[oldGenre]?.isEmpty ?? false) {
+          _categories.remove(oldGenre);
+        }
+        if (!_categories.containsKey(newGenre)) {
+          _categories[newGenre] = [];
+        }
+        _categories[newGenre]!.add(_playlist[index]);
+      }
+      notifyListeners();
     }
   }
 
