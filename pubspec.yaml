@@ -1,30 +1,48 @@
 name: flutter_application_1
-description: "A new Flutter project."
-publish_to: "none"
-version: 0.1.0
+description: A new Flutter project.
+publish_to: 'none'
+version: 1.0.0+1
 
 environment:
-  sdk: ^3.7.2
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  audioplayers: ^6.4.0          # For audio playback
-  provider: ^6.1.4             # For state management
-  permission_handler: ^11.3.1  # For requesting storage permissions
-  file_picker: ^8.1.2          # For manual file import
-  path_provider: ^2.1.5        # For accessing local storage
-  metadata_god: ^1.0.0         # For extracting metadata from audio files
-  mime: ^2.0.0                # For determining mime types (used with metadata_god)
+  provider: ^6.1.5
+  just_audio: ^0.9.40
+  just_audio_background: ^0.0.1-beta.16
+  file_picker: ^10.1.2
+  metadata_god: ^1.0.0
+  permission_handler: ^12.0.0+1
+  path_provider: ^2.1.4
+  crypto: ^3.0.5
+  marquee: ^2.2.3
+  flutter_native_splash: ^2.4.1
+  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^2.0.0
 
 flutter:
   uses-material-design: true
   assets:
-    - assets/audio/
-    - assets/images/
-    - assets/video/
+    - assets/images/default_art.png
+    - assets/images/splash_icon.png
+    - assets/images/app_icon.png
+
+flutter_native_splash:
+  color: "#1a1a1a"
+  image: assets/images/splash_icon.png
+  android: true
+  ios: true
+  android_gravity: center
+  ios_content_mode: center
+  fullscreen: true
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.png"

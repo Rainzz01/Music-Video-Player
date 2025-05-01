@@ -1,4 +1,3 @@
-// lib/components/neu_box.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/theme_provider.dart';

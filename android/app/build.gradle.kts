@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.flutter_application_1"
-    compileSdkVersion(35)
+    compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -14,15 +14,17 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        kotlinOptions {
+            jvmTarget = JavaVersion.VERSION_11.toString()
+        }
     }
 
     defaultConfig {
         applicationId = "com.example.flutter_application_1"
-        minSdkVersion(23)
-        targetSdkVersion(35)
-        versionCode = flutter.versionCode
+        minSdk = 23
+        targetSdk = 35
+        versionCode = flutter.versionCode.toInt()
         versionName = flutter.versionName
     }
 
@@ -35,4 +37,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.0")
 }

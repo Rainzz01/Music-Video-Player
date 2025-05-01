@@ -5,22 +5,24 @@ import 'package:provider/provider.dart';
 import '../models/playlist_provider.dart';
 import '../pages/playlist_page.dart';
 import '../pages/settings_page.dart';
+import 'package:flutter_application_1/pages/home_page.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
 
   Future<bool> _requestPermissions() async {
-    final storageStatus = await Permission.storage.request();
     final audioStatus = await Permission.audio.request();
     final imagesStatus = await Permission.photos.request();
     final videosStatus = await Permission.videos.request();
-    if (storageStatus.isGranted || audioStatus.isGranted || imagesStatus.isGranted || videosStatus.isGranted) {
+    final notificationStatus = await Permission.notification.request();
+
+    if (audioStatus.isGranted || imagesStatus.isGranted || videosStatus.isGranted || notificationStatus.isGranted) {
       return true;
     }
-    if (storageStatus.isPermanentlyDenied ||
-        audioStatus.isPermanentlyDenied ||
+    if (audioStatus.isPermanentlyDenied ||
         imagesStatus.isPermanentlyDenied ||
-        videosStatus.isPermanentlyDenied) {
+        videosStatus.isPermanentlyDenied ||
+        notificationStatus.isPermanentlyDenied) {
       await openAppSettings();
     }
     return false;
@@ -48,7 +50,13 @@ class MyDrawer extends StatelessWidget {
             child: ListTile(
               title: const Text("H O M E"),
               leading: const Icon(Icons.home),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomePage()),
+                );
+              },
             ),
           ),
           Padding(
@@ -58,7 +66,7 @@ class MyDrawer extends StatelessWidget {
               leading: const Icon(Icons.playlist_play),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => const PlaylistPage()),
                 );
@@ -72,7 +80,7 @@ class MyDrawer extends StatelessWidget {
               leading: const Icon(Icons.settings),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => const SettingsPage()),
                 );
@@ -90,7 +98,7 @@ class MyDrawer extends StatelessWidget {
                   if (!await _requestPermissions()) {
                     scaffoldMessenger.showSnackBar(
                       const SnackBar(
-                        content: Text('Storage, audio, images, or video permission required to import.'),
+                        content: Text('Audio, images, videos, or notification permission required.'),
                         action: SnackBarAction(
                           label: 'Settings',
                           onPressed: openAppSettings,

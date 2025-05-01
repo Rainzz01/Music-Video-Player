@@ -1,4 +1,3 @@
-// lib/models/song.dart
 class Song {
   final String songName;
   final String artistName;
@@ -6,6 +5,7 @@ class Song {
   final String audioPath;
   final String? album;
   final String? genre;
+  final String fileHash;
 
   Song({
     required this.songName,
@@ -14,5 +14,15 @@ class Song {
     required this.audioPath,
     this.album,
     this.genre,
+    required this.fileHash,
   });
+
+  Song.empty()
+      : songName = '',
+        artistName = '',
+        albumArtImagePath = 'assets/images/default_art.png',
+        audioPath = '',
+        album = null,
+        genre = null,
+        fileHash = '';
 }
