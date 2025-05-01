@@ -25,7 +25,7 @@ class PlaylistProvider extends ChangeNotifier {
   bool _metadataInitialized = false;
   List<String> _importedSongPaths = [];
   Map<String, Map<String, String>> _editedMetadata = {};
-  Map<String, List<String>> _tags = {'Favorites': []}; // Map of tag names to song paths
+  Map<String, List<String>> _tags = {'Favorites': []};
   PlayMode _playMode = PlayMode.sequential;
 
   PlaylistProvider() {
@@ -134,7 +134,7 @@ class PlaylistProvider extends ChangeNotifier {
       final file = File('${directory.path}/tags.json');
       await file.writeAsString(jsonEncode(_tags));
       print('Saved tags: $_tags');
-      _categories.removeWhere((key, value) => _tags.containsKey(key)); // Remove old tag categories
+      _categories.removeWhere((key, value) => _tags.containsKey(key));
       for (var tag in _tags.keys) {
         _categories[tag] = _playlist.where((song) => _tags[tag]!.contains(song.audioPath)).toList();
       }
@@ -265,7 +265,6 @@ class PlaylistProvider extends ChangeNotifier {
         }
       }
 
-      // Rebuild tag-based categories
       for (var tag in _tags.keys) {
         _categories[tag] = _playlist.where((song) => _tags[tag]!.contains(song.audioPath)).toList();
       }
@@ -367,7 +366,7 @@ class PlaylistProvider extends ChangeNotifier {
     try {
       final dir = await getTemporaryDirectory();
       final artPath = '${dir.path}/${sourcePath.hashCode}.png';
-      await File(artPath).copy(artPath);
+      await File(sourcePath).copy(artPath);
       print('Saved custom album art: $artPath');
       notifyListeners();
       return artPath;
