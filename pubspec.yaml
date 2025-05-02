@@ -18,13 +18,13 @@ dependencies:
   path_provider: ^2.1.4
   crypto: ^3.0.5
   marquee: ^2.2.3
-  flutter_native_splash: ^2.4.1
-  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.0
 
 flutter:
   uses-material-design: true
@@ -32,17 +32,22 @@ flutter:
     - assets/images/default_art.png
     - assets/images/splash_icon.png
     - assets/images/app_icon.png
+    - assets/images/MusicVerse_dark.png
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/MusicVerse_dark.png"
+  min_sdk_android: 23
+  adaptive_icon_background: "#1C2526" # Dark background color for adaptive icon
+  adaptive_icon_foreground: "assets/images/MusicVerse_dark.png"
 
 flutter_native_splash:
-  color: "#1a1a1a"
-  image: assets/images/splash_icon.png
+  color: "#1C2526" # Dark background color
+  image: assets/images/MusicVerse_dark.png
   android: true
   ios: true
-  android_gravity: center
-  ios_content_mode: center
+  android_12:
+    image: assets/images/MusicVerse_dark.png
+    color: "#1C2526"
   fullscreen: true
-
-flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/app_icon.png"

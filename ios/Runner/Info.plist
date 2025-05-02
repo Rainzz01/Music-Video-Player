@@ -49,5 +49,7 @@
 		<true/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
+		<key>CFBundleIconName</key>
+		<string>AppIcon</string>
 	</dict>
 </plist>
