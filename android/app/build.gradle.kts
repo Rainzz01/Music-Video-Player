@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.flutter_application_1"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 35
         versionCode = flutter.versionCode.toInt()
         versionName = flutter.versionName
@@ -37,8 +37,4 @@ android {
 
 flutter {
     source = "../.."
-}
-
-dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.0")
 }

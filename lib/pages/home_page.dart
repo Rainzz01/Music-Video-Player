@@ -2,13 +2,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/models/playlist_provider.dart';
 import 'package:flutter_application_1/pages/playlist_page.dart';
 import 'package:flutter_application_1/pages/song_page.dart';
 import 'package:flutter_application_1/pages/settings_page.dart';
 import 'package:flutter_application_1/components/neu_box.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../components/my_drawer.dart';
+import '../services/auth_service.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

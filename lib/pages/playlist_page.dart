@@ -60,7 +60,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
                     .description,
                 child: IconButton(
                   icon: const Icon(Icons.refresh),
-                  onPressed: provider.loadLocalSongs,
+                  onPressed: provider.loadSongsFromCloud,
                 ),
               ),
               Tooltip(
@@ -206,17 +206,18 @@ class _PlaylistPageState extends State<PlaylistPage> {
             onPressed: () async {
               try {
                 final result = await FilePicker.platform.pickFiles(
-                  type: FileType.audio,
+                  type: FileType.custom,
+                  allowedExtensions: ['mp3', 'm4a', 'mp4'], // Allow MP3, M4A, MP4
                 );
                 if (result != null && result.files.single.path != null) {
                   await provider.importSong(result.files.single.path!);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Song imported successfully')),
+                    const SnackBar(content: Text('File imported successfully')),
                   );
                 }
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to import song: ${e.toString().replaceFirst('Exception: ', '')}')),
+                  SnackBar(content: Text('Failed to import file: ${e.toString().replaceFirst('Exception: ', '')}')),
                 );
               }
             },
@@ -252,8 +253,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
             onPressed: () {
               final name = playlistController.text.trim();
               if (name.isNotEmpty && !provider.tags.containsKey(name)) {
-                provider.addTagToSong(Song.empty(), name); // Initialize the tag
-                provider.removeTagFromSong(Song.empty(), name); // Remove dummy song
+                provider.createPlaylist(name); // Use the new method
                 Navigator.pop(context);
                 setState(() {});
               }
